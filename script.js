@@ -7,9 +7,9 @@ window.addEventListener('load', function(){
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    document.body.addEventListener("touchstart", function(e){ if (e.target.nodeName == 'CANVAS') { e.preventDefault(); } }, false);
-    document.body.addEventListener("touchend", function(e){ if (e.target.nodeName == 'CANVAS') { e.preventDefault(); } }, false);
-    document.body.addEventListener("touchmove", function(e){ if (e.target.nodeName == 'CANVAS') { e.preventDefault(); } }, false);
+    // document.body.addEventListener("touchstart", function(e){ if (e.target.nodeName == 'CANVAS') { e.preventDefault(); } }, false);
+    // document.body.addEventListener("touchend", function(e){ if (e.target.nodeName == 'CANVAS') { e.preventDefault(); } }, false);
+    // document.body.addEventListener("touchmove", function(e){ if (e.target.nodeName == 'CANVAS') { e.preventDefault(); } }, false);
 
     
     class Particle {
@@ -87,6 +87,12 @@ window.addEventListener('load', function(){
             window.addEventListener('mousemove', event => {
                 this.mouse.x = event.x;
                 this.mouse.y = event.y;
+            });
+            window.addEventListener('mousedown', event => {
+                this.mouse.radius *= 500;
+            });
+            window.addEventListener('mouseup', event => {
+                this.mouse.radius = 1500;
             });
         }
 
