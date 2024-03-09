@@ -16,6 +16,7 @@ window.addEventListener('load', function(){
 
         constructor(effect,x,y,color){
             this.effect = effect;
+            //NOTE: Position on load and default position
             this.x = Math.random() * this.effect.width;
             this.y = Math.random() * this.effect.width;
             this.originX = Math.floor(x);
@@ -23,11 +24,13 @@ window.addEventListener('load', function(){
             this.color = color;
             this.size = this.effect.gap;
 
+            //NOTE: Physics - velocity, ease(acceleration to), friction(acceleration from)
             this.vx = 0;
             this.vy = 0;
             this.ease = 0.15;
             this.friction = 0.9;
 
+            //NOTE: Current state - distance from origin, force to destination, angle to origin x,y
             this.dx = 0;
             this.dy = 0;
             this.distance = 0;
@@ -40,27 +43,30 @@ window.addEventListener('load', function(){
             context.fillRect(this.x,this.y,this.size,this.size);
         }
         update(){
+            //NOTE: Current state calculation
             this.dx = this.effect.mouse.x - this.x;
             this.dy = this.effect.mouse.y - this.y;
             this.distance = this.dx * this.dx + this.dy * this.dy;
-            this.force = -this.effect.mouse.radius / this.distance;
 
+            //NOTE: Describes the force
+            this.force = -this.effect.mouse.radius / this.distance;
             if(this.distance < this.effect.mouse.radius){
                 this.angle = Math.atan2(this.dy, this.dx);
                 this.vx += this.force * Math.cos(this.angle);
                 this.vy += this.force * Math.sin(this.angle);
             }
 
+            //NOTE: Describes the return to position
             this.x += (this.vx *= this.friction) + (this.originX - this.x) * this.ease;
             this.y += (this.vy *= this.friction) + (this.originY - this.y) * this.ease;
         }
         warp(){
-            this.x += Math.random() * this.effect.width - this.effect.width/2;
-            this.y += Math.random() * this.effect.height - this.effect.height/2;
+            this.x += Math.random() * this.effect.width - this.effect.width /2;
+            this.y += Math.random() * this.effect.height - this.effect.height /2;
         }
         offsetOrigin(newX,newY){
-            this.originX += newX/2;
-            this.originY += newY/2;
+            this.originX += newX /2;
+            this.originY += newY /2;
         }
     }
     
@@ -73,23 +79,25 @@ window.addEventListener('load', function(){
             this.particlesArray = [];
             this.image = document.getElementById('image1');
 
+            //NOTE: Centering on canvas and establishing center point
             this.centerX = this.width * 0.5;
             this.centerY = this.height * 0.5;
             this.x = this.centerX - this.image.width * 0.5
             this.y = this.centerY - this.image.height * 0.5
-            this.gap = 6;
+            this.gap = 6; //NOTE: Act as a divider of original resolution
 
             this.mouse = {
                 radius: 1500,
                 x: undefined,
                 y: undefined,
             }
+
             window.addEventListener('mousemove', event => {
                 this.mouse.x = event.x;
                 this.mouse.y = event.y;
             });
             window.addEventListener('mousedown', event => {
-                this.mouse.radius *= 500;
+                this.mouse.radius *= 150 / 4;
             });
             window.addEventListener('mouseup', event => {
                 this.mouse.radius = 1500;
@@ -97,6 +105,8 @@ window.addEventListener('load', function(){
         }
 
         init(context){
+            console.time('Image init');
+
             context.drawImage(this.image,this.x,this.y);
             const pixels = context.getImageData(0,0,this.width,this.height).data;
             // console.log(pixels); -- see image data format (r,g,b,a,r,g,...)
@@ -114,6 +124,8 @@ window.addEventListener('load', function(){
                     }
                 }
             }
+            
+            console.timeEnd('Image init');
         }
         draw(context){
             this.particlesArray.forEach(particle => particle.draw(context));
@@ -129,17 +141,18 @@ window.addEventListener('load', function(){
         }
         resize(newWidth,newHeight){
 
-            let xDifference = newWidth - this.width;
-            let yDifference = newHeight - this.height;
+            const xDifference = newWidth - this.width;
+            const yDifference = newHeight - this.height;
+
             this.offsetEffect(xDifference,yDifference);
 
             this.width = newWidth;
             this.height = newHeight;
 
-            this.centerX = newWidth * 0.5;
-            this.centerY = newHeight * 0.5;
-            this.x = this.centerX - this.image.width * 0.5;
-            this.y = this.centerY - this.image.height * 0.5;
+            this.centerX = newWidth /2;
+            this.centerY = newHeight /2;
+            this.x = this.centerX - this.image.width /2;
+            this.y = this.centerY - this.image.height /2;
         }
     }
 
@@ -165,10 +178,6 @@ window.addEventListener('load', function(){
     window.addEventListener('resize', function(){
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        effect.resize(canvas.width,canvas.height);
-    });
-
-    window.addEventListener('mousedown', function(){
         effect.resize(canvas.width,canvas.height);
     });
 
