@@ -1,0 +1,48 @@
+*{
+    margin: 0;
+    border: 0;
+    top: 0;
+    left: 0;
+}
+
+#canvas1 {
+    background: white;
+    position: absolute;
+}
+
+
+.controls {
+    position: absolute;
+    z-index: 100;
+    top: 0;
+}
+
+#image1 {
+    display: none;
+}
+
+button {
+    padding: 18px;
+    font-size: 40px;
+    margin: 24px;
+    font-family: "Anta", sans-serif;
+    font-weight: 800;
+    border-radius: 120px;
+    color: white;
+    background: black;
+    transition: 0.2s;
+}
+
+button:hover {
+    padding: 20px;
+    margin: 22px;
+    color: black;
+    background: rgba(0, 0, 0, 0.459);
+}
+
+button:active {
+    padding: 15px;
+    margin: 27px;
+    color: #37f0d7;
+    background: rgba(255, 255, 255, 0);
+}
