@@ -6,7 +6,7 @@
 }
 
 #canvas1 {
-    background: white;
+    background: #eee;
     position: absolute;
 }
 
@@ -17,16 +17,24 @@
     top: 0;
 }
 
-#image1 {
+img {
     display: none;
 }
 
+.controls {
+    display: flex;
+    width: 100%;
+    height: auto;
+    justify-content: space-between;
+    align-items: center;
+}
+
 button {
-    padding: 18px;
-    font-size: 40px;
+    padding: 14px;
+    font-size: 30px;
     margin: 24px;
     font-family: "Anta", sans-serif;
-    font-weight: 800;
+    font-weight: 600;
     border-radius: 120px;
     color: white;
     background: black;
@@ -34,14 +42,14 @@ button {
 }
 
 button:hover {
-    padding: 20px;
+    padding: 16px;
     margin: 22px;
     color: black;
     background: rgba(0, 0, 0, 0.459);
 }
 
 button:active {
-    padding: 15px;
+    padding: 11px;
     margin: 27px;
     color: #37f0d7;
     background: rgba(255, 255, 255, 0);

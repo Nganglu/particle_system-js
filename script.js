@@ -11,7 +11,6 @@ window.addEventListener('load', function(){
     // document.body.addEventListener("touchend", function(e){ if (e.target.nodeName == 'CANVAS') { e.preventDefault(); } }, false);
     // document.body.addEventListener("touchmove", function(e){ if (e.target.nodeName == 'CANVAS') { e.preventDefault(); } }, false);
 
-    
     class Particle {
 
         constructor(effect,x,y,color){
@@ -72,12 +71,15 @@ window.addEventListener('load', function(){
     
     class Effect {
 
-        constructor(width,height){
+        constructor(width,height,imageId){
             this.width = width;
             this.height = height;
 
+            this.imageArray = ['image1','image2','image3','image4','image5']; //! HARDCODED FOR DEMO PURPOSE
+            this.currentImageIndex = 0;
+
             this.particlesArray = [];
-            this.image = document.getElementById('image1');
+            this.image = document.getElementById(this.imageArray[this.currentImageIndex]);
 
             //NOTE: Centering on canvas and establishing center point
             this.centerX = this.width * 0.5;
@@ -97,7 +99,7 @@ window.addEventListener('load', function(){
                 this.mouse.y = event.y;
             });
             window.addEventListener('mousedown', event => {
-                this.mouse.radius *= 150 / 4;
+                this.mouse.radius *= 100 / 4;
             });
             window.addEventListener('mouseup', event => {
                 this.mouse.radius = 1500;
@@ -154,13 +156,21 @@ window.addEventListener('load', function(){
             this.x = this.centerX - this.image.width /2;
             this.y = this.centerY - this.image.height /2;
         }
+        nextImage(){
+            if (this.currentImageIndex >= this.imageArray.length -1) {
+                this.currentImageIndex = 0;
+            } else {
+                this.currentImageIndex++;
+            }
+            this.particlesArray = [];
+            this.image = document.getElementById(this.imageArray[this.currentImageIndex]);
+        }
     }
 
-    const effect = new Effect(canvas.width,canvas.height);
-    effect.init(ctx);
-    console.log(effect);
+    const effect = new Effect(canvas.width,canvas.height,'image1');
+    effect.init(ctx);    
     
-    
+
     function animate(){
         ctx.clearRect(0,0,canvas.width,canvas.height)
         effect.draw(ctx);
@@ -173,6 +183,14 @@ window.addEventListener('load', function(){
     const warpButton = document.getElementById('warpButton');
     warpButton.addEventListener('mousedown', function(){
         effect.warp();
+    });
+
+    const nextButton = document.getElementById('nextButton');
+    nextButton.addEventListener('mousedown', function(){
+        ctx.clearRect(0,0,canvas.width,canvas.height)
+        effect.nextImage();
+        effect.resize(canvas.width,canvas.height);
+        effect.init(ctx);
     });
 
     window.addEventListener('resize', function(){
