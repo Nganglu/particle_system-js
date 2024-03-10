@@ -180,5 +180,4 @@ window.addEventListener('load', function(){
         canvas.height = window.innerHeight;
         effect.resize(canvas.width,canvas.height);
     });
-
 });
