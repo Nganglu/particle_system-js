@@ -17,6 +17,8 @@ window.addEventListener('load', function(){
             this.velocity = {vx:0,vy:0};
             this.acceleration = {ax:0,ay:0};
 
+            this.state = 'moving';
+            this.type; // image, standard,
             this.force = force;
             this.friction = 0.005;
 
@@ -27,45 +29,66 @@ window.addEventListener('load', function(){
                 right:this.x + this.size/2,
                 left:this.x - this.size/2,
                 bottom:this.y + this.size/2,
-            }
+            };
 
             this.world = World;
-        }
+        };
 
         update(){
 
-            const frictionForceX = -this.velocity.vx * this.friction;
-            const frictionForceY = -this.velocity.vy * this.friction;
+            //NOTE: State machine Particle -> moving, immobile, colliding;
+            switch (this.state) {
+                case 'moving':
+                    this.updateMovingState();
+                    break;
+                case 'static':
+                    break;
+                case 'colliding':
+                    break;
+            };
 
-            //add forces
-            this.force.fx += frictionForceX ;
-            this.force.fy += this.world.gravity * this.mass + frictionForceY;
+            
+        };
 
-            // update acceleration
-            this.acceleration.ax = this.force.fx / this.mass;
-            this.acceleration.ay = this.force.fy / this.mass;
-
-            // update velocity
-            this.velocity.vx += this.acceleration.ax * this.world.timeStep;
-            this.velocity.vy += this.acceleration.ay * this.world.timeStep;
-
-            // update position
-            this.position.x += this.velocity.vx * this.world.timeStep + 0.5 * this.acceleration.ax * Math.pow(this.world.timeStep,2);
-            this.position.y += this.velocity.vy * this.world.timeStep + 0.5 * this.acceleration.ay * Math.pow(this.world.timeStep,2);
-
-            // ground
-            this.position.y = Math.min(this.position.y,canvas.height - this.size/2);
-
+        updateMovingState(){
+            this.applyForces();
+            this.updateAcceleration();
+            this.updateVelocity();
+            this.updatePosition();
+            this.handleCollision();
+            
             this.force = {fx:0,fy:0};
             this.acceleration = {vx:0,vy:0};
+        };
+        
+        applyForces(){
+            const frictionForceX = -this.velocity.vx * this.friction;
+            const frictionForceY = -this.velocity.vy * this.friction;
             
-        }
-
+            this.force.fx += frictionForceX ;
+            this.force.fy += this.world.gravity * this.mass + frictionForceY;
+        };
+        updateAcceleration(){
+            this.acceleration.ax = this.force.fx / this.mass;
+            this.acceleration.ay = this.force.fy / this.mass;
+        };
+        updateVelocity(){
+            this.velocity.vx += this.acceleration.ax * this.world.timeStep;
+            this.velocity.vy += this.acceleration.ay * this.world.timeStep;
+        };
+        updatePosition(){
+            this.position.x += this.velocity.vx * this.world.timeStep + 0.5 * this.acceleration.ax * Math.pow(this.world.timeStep,2);
+            this.position.y += this.velocity.vy * this.world.timeStep + 0.5 * this.acceleration.ay * Math.pow(this.world.timeStep,2);
+        };
+        handleCollision(){
+            this.position.y = Math.min(this.position.y,canvas.height - this.size/2);
+        };
+        
         draw(context){
             context.fillStyle = 'black';
             context.fillRect(this.position.x-this.size/2,this.position.y-this.size/2,this.size,this.size); // x,y is center of particle
-        }
-    }
+        };
+    };
 
     class World {
         constructor() {
@@ -77,7 +100,14 @@ window.addEventListener('load', function(){
 
             this.gravity = 9.8 / 1000;
 
+            // History, currentFrame + position
+            this.particleLimit = 12;
+
             this.mouse = {
+                x: undefined,
+                y: undefined,
+            }
+            this.clickPos = {
                 x: undefined,
                 y: undefined,
             }
@@ -87,7 +117,13 @@ window.addEventListener('load', function(){
                 this.mouse.y = event.y;
             });
             window.addEventListener('mousedown', event => {
-                this.addParticle(this.mouse.x,this.mouse.y);
+                this.clickPos.x = event.x;
+                this.clickPos.y = event.y;
+            });
+            window.addEventListener('mouseup', event => {
+                const force = {fx:(this.clickPos.x - this.mouse.x)/500,fy:(this.clickPos.y - this.mouse.y)/500};
+                console.log(force);
+                this.addParticle(this.mouse.x,this.mouse.y,force);
             });
         }
 
@@ -98,6 +134,8 @@ window.addEventListener('load', function(){
             
             this.timeStep = Math.floor(deltaTime * this.timescale);
 
+
+            if (this.particlesArray.length > this.particleLimit) this.particlesArray.shift() ;
             this.particlesArray.forEach(particle => {
                 particle.update()
             });
@@ -106,10 +144,9 @@ window.addEventListener('load', function(){
         draw(context){
             this.particlesArray.forEach(particle => particle.draw(context));
         }
-        addParticle(x,y) {
-            this.particlesArray.push(new Particle(x,y,this,{fx:0.05,fy:0}));
+        addParticle(x,y,force) {
+            this.particlesArray.push(new Particle(x,y,this,force));
         }
-        
     }
 
     const world = new World();
