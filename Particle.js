@@ -16,6 +16,7 @@ window.addEventListener('load', function(){
             this.origin = {...this.position};
             this.velocity = {vx:0,vy:0};
             this.acceleration = {ax:0,ay:0};
+            this.momentum = {mx:0,my:0};
 
             this.state = 'moving';
             this.type; // image, standard,
@@ -23,6 +24,7 @@ window.addEventListener('load', function(){
             this.friction = 0.5;
             this.drag = 0.0001;
             this.bounciness = 0.5; // unimplemented
+            this.kineticEnergy = 0;
 
             this.color = color;
             this.size = 40;
@@ -49,22 +51,21 @@ window.addEventListener('load', function(){
                 case 'colliding':
                     break;
             };
-
-            
         };
 
         updateMovingState(){
-            this.applyForces();
+            this.applyExternalForces();
             this.updateAcceleration();
             this.updateVelocity();
             this.updatePosition();
+            this.calculateMomentum();
             this.handleCollision();
             
             this.force = {fx:0,fy:0};
             this.acceleration = {vx:0,vy:0};
         };
         
-        applyForces(){
+        applyExternalForces(){
             // external (gravity / static friction / drag) & internal (impact / dynamic friction)
             const dragForceX = -this.velocity.vx * this.drag;
             const dragForceY = -this.velocity.vy * this.drag;
@@ -81,29 +82,45 @@ window.addEventListener('load', function(){
             this.velocity.vy += this.acceleration.ay * this.world.timeStep;
         };
         updatePosition(){
-            this.position.x += this.velocity.vx * this.world.timeStep + 0.5 * this.acceleration.ax * Math.pow(this.world.timeStep,2);
-            this.position.y += this.velocity.vy * this.world.timeStep + 0.5 * this.acceleration.ay * Math.pow(this.world.timeStep,2);
+            this.position.x += Math.floor(this.velocity.vx * this.world.timeStep + 0.5 * this.acceleration.ax * Math.pow(this.world.timeStep,2));
+            this.position.y += Math.floor(this.velocity.vy * this.world.timeStep + 0.5 * this.acceleration.ay * Math.pow(this.world.timeStep,2));
         };
-        handleCollision(){
+        calculateMomentum(){
+            this.momentum.mx = this.mass*this.velocity.vx;
+            this.momentum.my = this.mass*this.velocity.vy;
 
-            // floor
-            if (this.position.y + this.size / 2 >= canvas.height) {
-                this.position.y = canvas.height - this.size / 2;
-                this.velocity.vy *= -this.bounciness;
-                this.velocity.vx *= (1 - this.friction*this.world.floorFriction);
+        }
+        handleCollision(){
+            if (this.velocity.vx != 0 && this.velocity.vy != 0) console.log(this);
+
+            // Collision top-right-down-left
+            //! HANDLE COLLISION BY ANGLE INTEAD. Else, spiderman...
+            // calculate kinetic energy to apply and deduct from to avoid calculation problems.
+
+
+            if (this.velocity.vy < 0) {};
+            if (this.velocity.vx > 0) {
+                if (this.position.x + this.size / 2 >= canvas.width) {
+                    this.position.x = canvas.width - this.size / 2;
+                    this.velocity.vx *= -this.bounciness;
+                    this.velocity.vy *= (1 - this.friction*this.world.wallFriction);
+                };
             };
-            // right wall
-            if (this.position.x + this.size / 2 >= canvas.width) {
-                this.position.x = canvas.width - this.size / 2;
-                this.velocity.vx *= -this.bounciness;
-                this.velocity.vy *= (1 - this.friction*this.world.wallFriction);
+            if (this.velocity.vy > 0) {
+                if (this.position.y + this.size / 2 >= canvas.height) {
+                    this.position.y = canvas.height - this.size / 2;
+                    this.velocity.vy *= -this.bounciness;
+                    this.velocity.vx *= (1 - this.friction*this.world.floorFriction);
+                };
             };
-            // left wall
-            if (this.position.x - this.size / 2 <= 0) {
-                this.position.x = 0 + this.size / 2;
-                this.velocity.vx *= -this.bounciness;
-                this.velocity.vy *= (1 - this.friction*this.world.wallFriction);
-            }
+            if (this.velocity.vx < 0) {
+                if (this.position.x - this.size / 2 <= 0) {
+                    this.position.x = 0 + this.size / 2;
+                    this.velocity.vx *= -this.bounciness;
+                    this.velocity.vy *= (1 - this.friction*this.world.wallFriction);
+                }
+            };
+
         };
         
         draw(context){
@@ -121,12 +138,12 @@ window.addEventListener('load', function(){
 
             this.lastFrameTime = performance.now();
             this.timeStep = 0;
-            this.timescale = 1;
+            this.timescale = 0.5;
 
             this.gravity = 9.8 / 1000;
 
             // History, currentFrame + position
-            this.particleLimit = 12;
+            this.particleLimit = 1;
 
             this.mouse = {
                 x: undefined,
@@ -144,16 +161,17 @@ window.addEventListener('load', function(){
             window.addEventListener('mousedown', event => {
                 this.clickPos.x = event.x;
                 this.clickPos.y = event.y;
+                this.mousedown = true;
             });
             window.addEventListener('mouseup', event => {
                 const force = {fx:(this.clickPos.x - this.mouse.x)/500,fy:(this.clickPos.y - this.mouse.y)/500};
-                console.log(force);
                 this.addParticle(this.mouse.x,this.mouse.y,force);
+                this.mousedown = false;
             });
         }
 
         update(){
-            const currentTime = performance.now();
+            const currentTime = Math.floor(performance.now());
             const deltaTime = currentTime - this.lastFrameTime;
             this.lastFrameTime = currentTime;
             
@@ -162,21 +180,29 @@ window.addEventListener('load', function(){
 
             if (this.particlesArray.length > this.particleLimit) this.particlesArray.shift() ;
             this.particlesArray.forEach(particle => {
-                particle.update()
+                particle.update();
             });
         }
 
         draw(context){
             this.particlesArray.forEach(particle => particle.draw(context));
+
+            if (this.mousedown){
+                ctx.moveTo(this.clickPos.x,this.clickPos.y);
+                ctx.lineTo(this.mouse.x,this.mouse.y);
+                ctx.lineWidth = 8;
+                ctx.strokeStyle = 'red';
+                ctx.stroke();
+            }
         }
         addParticle(x,y,force) {
-            const mod = Math.random() * 50 * Math.round(Math.random()) * 2 - 1;            ;
+            const mod = Math.random() * 50 * Math.round(Math.random()) * 2 - 1;
             const rValue = Math.floor(Math.random() * 30 + 100 - mod);
             const gValue = Math.floor(Math.random() * 40 + 20);
             const bValue = Math.floor(Math.random() * 30 + 100 + mod);
 
             const color = 'rgb('+rValue+','+gValue+','+bValue+')';
-            console.log(color);
+            // console.log(color);
 
             this.particlesArray.push(new Particle(x,y,this,force,color));
         }
@@ -185,7 +211,7 @@ window.addEventListener('load', function(){
     const world = new World();
 
     function animate(){
-        ctx.clearRect(0,0,canvas.width,canvas.height)
+        ctx.clearRect(0,0,canvas.width,canvas.height);
         world.draw(ctx);
         world.update();
         requestAnimationFrame(animate);
