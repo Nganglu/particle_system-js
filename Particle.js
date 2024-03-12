@@ -29,12 +29,6 @@ window.addEventListener('load', function(){
             this.color = color;
             this.size = 40;
             this.mass = 1;
-            this.hitbox = {
-                top:this.y - this.size/2,
-                right:this.x + this.size/2,
-                left:this.x - this.size/2,
-                bottom:this.y + this.size/2,
-            };
 
             this.world = World;
         };
